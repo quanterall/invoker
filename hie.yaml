@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "invoker:lib"
+
+    - path: "./test"
+      component: "invoker:test:invoker-test"

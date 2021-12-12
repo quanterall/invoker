@@ -1,0 +1,8 @@
+*~
+*.swp
+tarballs/
+.stack-work/
+.devcontainer/build
+.env
+.invoker
+*.cabal
