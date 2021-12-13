@@ -31,6 +31,7 @@ dependencies:
 - microlens-th
 - lens
 - mtl
+- directory
 
 default-extensions:
 - ApplicativeDo
