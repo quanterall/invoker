@@ -11,8 +11,8 @@ import Templates
 import UI
 
 run :: Options -> RIO App ()
-run Options {defaultQueueUrl} = do
-  liftIO $ loadEnvFile ".env"
+run Options {defaultQueueUrl, environmentFile} = do
+  liftIO $ loadEnvFile environmentFile
   awsEnv' <- liftIO getAwsEnv
   case awsEnv' of
     Nothing -> exitFailure
@@ -31,7 +31,7 @@ loadEnvFile :: FilePath -> IO ()
 loadEnvFile path = do
   dotEnvExists <- Directory.doesFileExist path
   when dotEnvExists $ do
-    dotEnvValues <- parseDotEnv ".env"
+    dotEnvValues <- parseDotEnv path
     forM_ dotEnvValues $ \(key, value) -> do
       Environment.setEnv key value
 

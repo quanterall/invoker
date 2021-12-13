@@ -10,7 +10,8 @@ import RIO.Process
 -- | Command line arguments
 data Options = Options
   { verbose :: !Bool,
-    defaultQueueUrl :: Maybe QueueUrl
+    defaultQueueUrl :: !(Maybe QueueUrl),
+    environmentFile :: !FilePath
   }
   deriving (Show, Eq, Generic)
 

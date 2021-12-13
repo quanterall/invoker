@@ -29,6 +29,12 @@ main = do
                 <> help "Queue name"
                 <> value Nothing
             )
+          <*> strOption
+            ( long "environment-file"
+                <> short 'e'
+                <> help "Environment file to read configuration from"
+                <> value ".env"
+            )
       )
       empty
   lo <- logOptionsHandle stderr (verbose options)
