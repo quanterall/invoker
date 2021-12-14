@@ -45,6 +45,16 @@ getQueueAttributes queueUrl = do
     Right response -> pure $ Right $ createQueueAttributes queueUrl response
     Left e -> pure $ Left e
 
+purgeQueue ::
+  (MonadAWS m, MonadUnliftIO m) =>
+  QueueUrl ->
+  m (Either AWS.Error ())
+purgeQueue (QueueUrl queueUrl) = do
+  maybeResponse <- try $ AWS.send $ AWSSQS.purgeQueue queueUrl
+  case maybeResponse of
+    Right _ -> pure $ Right ()
+    Left e -> pure $ Left e
+
 createQueueAttributes :: QueueUrl -> AWSSQS.GetQueueAttributesResponse -> QueueAttributes
 createQueueAttributes queueUrl response =
   let m = response ^. AWSSQS.gqarsAttributes

@@ -140,7 +140,19 @@ handleSendMessageForm ::
   Form SendMessageData Event Name ->
   BrickEvent Name Event ->
   EventM Name (Next UIState)
-handleSendMessageForm state form (VtyEvent (Vty.EvKey (Vty.KChar 's') [Vty.MCtrl])) = do
+handleSendMessageForm state form (VtyEvent (Vty.EvKey (Vty.KChar 's') [Vty.MCtrl])) =
+  handleSendMessage state form
+handleSendMessageForm state form (VtyEvent (Vty.EvKey (Vty.KChar 'd') [Vty.MCtrl])) =
+  handlePurgeQueue state form
+handleSendMessageForm state form event = do
+  formState <- handleFormEvent event form
+  continue $ state {sendMessageForm = formState}
+
+handleSendMessage ::
+  UIState ->
+  Form SendMessageData Event Name ->
+  EventM Name (Next UIState)
+handleSendMessage state form = do
   let url = formState form ^. queueUrl
       message' = formState form ^. message
       awsEnv' = state ^. awsEnv
@@ -165,9 +177,18 @@ handleSendMessageForm state form (VtyEvent (Vty.EvKey (Vty.KChar 's') [Vty.MCtrl
           addFlashMessage state $
             FlashMessage "Error" (awsErrorToText err) FlashError
       continue newState
-handleSendMessageForm state form event = do
-  formState <- handleFormEvent event form
-  continue $ state {sendMessageForm = formState}
+
+handlePurgeQueue :: UIState -> Form SendMessageData Event Name -> EventM Name (Next UIState)
+handlePurgeQueue state form = do
+  let url = formState form ^. queueUrl
+  liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
+  result <- liftIO $ AWS.runResourceT $ AWS.runAWS (state ^. awsEnv) $ SQS.purgeQueue url
+  newState <- case result of
+    Right () -> do
+      liftIO $ addFlashMessage state $ FlashMessage "Success" "Queue purged" FlashSuccess
+    Left err -> do
+      liftIO $ addFlashMessage state $ FlashMessage "Error" (awsErrorToText err) FlashError
+  continue newState
 
 handleLoadTemplateForm ::
   UIState ->
