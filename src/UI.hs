@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module UI (startUI) where
+module UI (startUI, Event (..)) where
 
 import Brick
 import Brick.BChan
@@ -16,6 +16,7 @@ import qualified RIO.Map as Map
 import RIO.Text (pack, unpack)
 import RIO.Vector ((!?))
 import qualified RIO.Vector as Vector
+import SQS (QueueAttributes (..))
 import qualified SQS
 import Templates
 
@@ -30,9 +31,14 @@ data Screen
   | LoadTemplateScreen
   deriving (Eq, Ord, Show)
 
-data Event
+data FlashMessageEvent
   = RemoveFlashMessage !Int
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Show)
+
+data Event
+  = FlashEvent !FlashMessageEvent
+  | CurrentQueueAttributes !(Maybe SQS.QueueAttributes)
+  deriving (Eq, Show)
 
 data SendMessageData = SendMessageData
   { _queueUrl :: !QueueUrl,
@@ -69,14 +75,15 @@ data UIState = UIState
     _awsEnv :: !AWS.Env,
     _flashMessages :: !(Map Int FlashMessage),
     _flashMessageCounter :: !Int,
-    _eventChannel :: !(BChan Event)
+    _queueAttributes :: !(Maybe SQS.QueueAttributes),
+    _eventChannel :: !(BChan Event),
+    _currentQueueUrlRef :: !(TVar (Maybe QueueUrl))
   }
 
 makeLenses ''UIState
 
-startUI :: AWS.Env -> Maybe QueueUrl -> [MessageTemplate] -> IO ()
-startUI awsEnv' maybeQueueUrl templates' = do
-  _eventChannel <- newBChan 20
+startUI :: TVar (Maybe QueueUrl) -> BChan Event -> AWS.Env -> Maybe QueueUrl -> [MessageTemplate] -> IO ()
+startUI _currentQueueUrlRef _eventChannel awsEnv' maybeQueueUrl templates' = do
   let buildVty = Vty.mkVty Vty.defaultConfig
   initialVty <- buildVty
   let initialState =
@@ -87,7 +94,9 @@ startUI awsEnv' maybeQueueUrl templates' = do
             _awsEnv = awsEnv',
             _flashMessages = mempty,
             _flashMessageCounter = 0,
-            _eventChannel
+            _queueAttributes = Nothing,
+            _eventChannel,
+            _currentQueueUrlRef
           }
       sendMessageForm =
         makeSendMessageForm $
@@ -111,7 +120,9 @@ app =
     }
 
 handleEvent :: UIState -> BrickEvent Name Event -> EventM Name (Next UIState)
-handleEvent state (AppEvent e@(RemoveFlashMessage _)) = handleFlashMessageEvent state e
+handleEvent state (AppEvent (FlashEvent e)) = handleFlashMessageEvent state e
+handleEvent state (AppEvent (CurrentQueueAttributes maybeAttributes)) = do
+  continue $ state & queueAttributes .~ maybeAttributes
 handleEvent state (VtyEvent (Vty.EvKey (Vty.KChar 'q') [Vty.MCtrl])) = halt state
 handleEvent state (VtyEvent (Vty.EvKey (Vty.KChar 't') [Vty.MCtrl])) =
   continue $ state & screen .~ LoadTemplateScreen
@@ -120,7 +131,7 @@ handleEvent state@UIState {_screen = SendMessageScreen, sendMessageForm} event =
 handleEvent state@UIState {_screen = LoadTemplateScreen, loadTemplateForm} event =
   handleLoadTemplateForm state loadTemplateForm event
 
-handleFlashMessageEvent :: UIState -> Event -> EventM Name (Next UIState)
+handleFlashMessageEvent :: UIState -> FlashMessageEvent -> EventM Name (Next UIState)
 handleFlashMessageEvent state (RemoveFlashMessage i) =
   continue $ state & flashMessages %~ Map.delete i
 
@@ -134,6 +145,7 @@ handleSendMessageForm state form (VtyEvent (Vty.EvKey (Vty.KChar 's') [Vty.MCtrl
       message' = formState form ^. message
       awsEnv' = state ^. awsEnv
   result <- liftIO $ AWS.runResourceT $ AWS.runAWS awsEnv' $ SQS.sendMessage url message'
+  liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
   case result of
     Right (Just messageId) -> do
       newState <-
@@ -202,7 +214,31 @@ drawFlashMessage FlashMessage {_flashMessageTitle, _flashMessageBody, _flashMess
       borderWithLabel (str $ unpack _flashMessageTitle) (str $ unpack _flashMessageBody)
 
 drawSendMessageScreen :: UIState -> Widget Name
-drawSendMessageScreen UIState {sendMessageForm} = renderForm sendMessageForm
+drawSendMessageScreen UIState {sendMessageForm, _queueAttributes} =
+  vBox [renderQueueAttributes _queueAttributes, renderForm sendMessageForm]
+
+renderQueueAttributes :: Maybe QueueAttributes -> Widget Name
+renderQueueAttributes Nothing = emptyWidget
+renderQueueAttributes
+  ( Just
+      QueueAttributes
+        { queueAttributesMessages,
+          queueAttributesDelayedMessages,
+          queueAttributesNotVisibleMessages
+        }
+    ) = do
+    borderWithLabel (str "Queue Attributes") $
+      hCenter $
+        hBox
+          [ str "Messages: ",
+            str $ maybe "N/A" show queueAttributesMessages,
+            str " | ",
+            str "Delayed: ",
+            str $ maybe "N/A" show queueAttributesDelayedMessages,
+            str " | ",
+            str "Not Visible: ",
+            str $ maybe "N/A" show queueAttributesNotVisibleMessages
+          ]
 
 drawLoadTemplateScreen :: UIState -> Widget Name
 drawLoadTemplateScreen UIState {loadTemplateForm} = do
@@ -254,7 +290,7 @@ addFlashMessage state msg = do
   let currentId = state ^. flashMessageCounter + 1
   async $ do
     threadDelay $ 4 * 1000 * 1000
-    writeBChan (state ^. eventChannel) $ RemoveFlashMessage currentId
+    writeBChan (state ^. eventChannel) $ FlashEvent $ RemoveFlashMessage currentId
   pure $
     state
       & flashMessages %~ Map.insert currentId msg
