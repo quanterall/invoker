@@ -56,17 +56,18 @@ data LoadTemplateData = LoadTemplateData
 
 makeLenses ''LoadTemplateData
 
-data FlashMessageType
-  = FlashSuccess
-  | FlashError
-  deriving (Eq, Ord, Show)
+data FlashMessage
+  = FlashSuccess FlashMessageData
+  | FlashError FlashMessageData
+  deriving (Eq, Show)
 
-data FlashMessage = FlashMessage
+data FlashMessageData = FlashMessageData
   { _flashMessageTitle :: !Text,
-    _flashMessageBody :: !Text,
-    _flashMessageType :: !FlashMessageType
+    _flashMessageBody :: !Text
   }
   deriving (Eq, Show)
+
+makeLenses ''FlashMessageData
 
 data UIState = UIState
   { _screen :: !Screen,
@@ -163,19 +164,19 @@ handleSendMessage state form = do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashMessage "Success" ("Message sent with id: " <> messageId) FlashSuccess
+            FlashSuccess $ FlashMessageData "Success" ("Message sent with id: " <> messageId)
       continue newState
     Right Nothing -> do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashMessage "Error" "Failed to send message" FlashError
+            FlashError $ FlashMessageData "Error" "Failed to send message"
       continue newState
     Left err -> do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashMessage "Error" (awsErrorToText err) FlashError
+            FlashError $ FlashMessageData "Error" (awsErrorToText err)
       continue newState
 
 handlePurgeQueue :: UIState -> Form SendMessageData Event Name -> EventM Name (Next UIState)
@@ -185,9 +186,9 @@ handlePurgeQueue state form = do
   result <- liftIO $ AWS.runResourceT $ AWS.runAWS (state ^. awsEnv) $ SQS.purgeQueue url
   newState <- case result of
     Right () -> do
-      liftIO $ addFlashMessage state $ FlashMessage "Success" "Queue purged" FlashSuccess
+      liftIO $ addFlashMessage state $ FlashSuccess $ FlashMessageData "Success" "Queue purged"
     Left err -> do
-      liftIO $ addFlashMessage state $ FlashMessage "Error" (awsErrorToText err) FlashError
+      liftIO $ addFlashMessage state $ FlashError $ FlashMessageData "Error" (awsErrorToText err)
   continue newState
 
 handleLoadTemplateForm ::
@@ -225,14 +226,16 @@ drawFlashMessages :: Map Int FlashMessage -> Widget Name
 drawFlashMessages m = vBox $ map drawFlashMessage $ Map.elems m
 
 drawFlashMessage :: FlashMessage -> Widget Name
-drawFlashMessage FlashMessage {_flashMessageTitle, _flashMessageBody, _flashMessageType} = do
-  let flashAttribute =
-        case _flashMessageType of
-          FlashSuccess -> flashSuccessAttr
-          FlashError -> flashErrorAttr
+drawFlashMessage flashMessage = do
+  let (flashAttribute, title, body) =
+        case flashMessage of
+          FlashSuccess data' ->
+            (flashSuccessAttr, data' ^. flashMessageTitle, data' ^. flashMessageBody)
+          FlashError data' ->
+            (flashErrorAttr, data' ^. flashMessageTitle, data' ^. flashMessageBody)
   withAttr flashAttribute $
     padAll 1 $
-      borderWithLabel (str $ unpack _flashMessageTitle) (str $ unpack _flashMessageBody)
+      borderWithLabel (str $ unpack title) (str $ unpack body)
 
 drawSendMessageScreen :: UIState -> Widget Name
 drawSendMessageScreen UIState {sendMessageForm, _queueAttributes} =
