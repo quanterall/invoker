@@ -57,17 +57,9 @@ data LoadTemplateData = LoadTemplateData
 makeLenses ''LoadTemplateData
 
 data FlashMessage
-  = FlashSuccess FlashMessageData
-  | FlashError FlashMessageData
+  = FlashSuccess !Text
+  | FlashError !Text
   deriving (Eq, Show)
-
-data FlashMessageData = FlashMessageData
-  { _flashMessageTitle :: !Text,
-    _flashMessageBody :: !Text
-  }
-  deriving (Eq, Show)
-
-makeLenses ''FlashMessageData
 
 data UIState = UIState
   { _screen :: !Screen,
@@ -164,19 +156,19 @@ handleSendMessage state form = do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashSuccess $ FlashMessageData "Success" ("Message sent with id: " <> messageId)
+            FlashSuccess $ "Message sent with id: " <> messageId
       continue newState
     Right Nothing -> do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashError $ FlashMessageData "Error" "Failed to send message"
+            FlashError $ "Failed to send message"
       continue newState
     Left err -> do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashError $ FlashMessageData "Error" (awsErrorToText err)
+            FlashError $ awsErrorToText err
       continue newState
 
 handlePurgeQueue :: UIState -> Form SendMessageData Event Name -> EventM Name (Next UIState)
@@ -186,9 +178,9 @@ handlePurgeQueue state form = do
   result <- liftIO $ AWS.runResourceT $ AWS.runAWS (state ^. awsEnv) $ SQS.purgeQueue url
   newState <- case result of
     Right () -> do
-      liftIO $ addFlashMessage state $ FlashSuccess $ FlashMessageData "Success" "Queue purged"
+      liftIO $ addFlashMessage state $ FlashSuccess $ "Queue purged"
     Left err -> do
-      liftIO $ addFlashMessage state $ FlashError $ FlashMessageData "Error" (awsErrorToText err)
+      liftIO $ addFlashMessage state $ FlashError $ awsErrorToText err
   continue newState
 
 handleLoadTemplateForm ::
@@ -229,10 +221,10 @@ drawFlashMessage :: FlashMessage -> Widget Name
 drawFlashMessage flashMessage = do
   let (flashAttribute, title, body) =
         case flashMessage of
-          FlashSuccess data' ->
-            (flashSuccessAttr, data' ^. flashMessageTitle, data' ^. flashMessageBody)
-          FlashError data' ->
-            (flashErrorAttr, data' ^. flashMessageTitle, data' ^. flashMessageBody)
+          FlashSuccess b ->
+            (flashSuccessAttr, "Success", b)
+          FlashError b ->
+            (flashErrorAttr, "Error", b)
   withAttr flashAttribute $
     padAll 1 $
       borderWithLabel (str $ unpack title) (str $ unpack body)
