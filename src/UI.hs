@@ -258,7 +258,7 @@ handleHelpScreen ::
   Screen ->
   EventM Name (Next UIState)
 handleHelpScreen state (VtyEvent (Vty.EvKey Vty.KEsc [])) previousScreen =
-  continue $ state & screen .~ previousScreen
+  continue $ state & screen .~ MenuScreen previousScreen
 handleHelpScreen state _event _previousScreen =
   continue state
 
