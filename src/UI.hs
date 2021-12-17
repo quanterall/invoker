@@ -29,6 +29,8 @@ data Name
 data Screen
   = SendMessageScreen
   | LoadTemplateScreen
+  | MenuScreen Screen
+  | HelpScreen Screen
   deriving (Eq, Ord, Show)
 
 data FlashMessageEvent
@@ -61,6 +63,20 @@ data FlashMessage
   | FlashError !Text
   deriving (Eq, Show)
 
+data MenuItem
+  = MenuHelp
+  | MenuQuit
+  deriving (Eq, Show)
+
+data MenuZipper = MenuZipper
+  { _menuUp :: ![MenuItem],
+    _menuFocus :: !MenuItem,
+    _menuDown :: ![MenuItem]
+  }
+  deriving (Eq)
+
+makeLenses ''MenuZipper
+
 data UIState = UIState
   { _screen :: !Screen,
     sendMessageForm :: !(Form SendMessageData Event Name),
@@ -70,7 +86,8 @@ data UIState = UIState
     _flashMessageCounter :: !Int,
     _queueAttributes :: !(Maybe SQS.QueueAttributes),
     _eventChannel :: !(BChan Event),
-    _currentQueueUrlRef :: !(TVar (Maybe QueueUrl))
+    _currentQueueUrlRef :: !(TVar (Maybe QueueUrl)),
+    _menuZipper :: !MenuZipper
   }
 
 makeLenses ''UIState
@@ -89,7 +106,8 @@ startUI _currentQueueUrlRef _eventChannel awsEnv' maybeQueueUrl templates' = do
             _flashMessageCounter = 0,
             _queueAttributes = Nothing,
             _eventChannel,
-            _currentQueueUrlRef
+            _currentQueueUrlRef,
+            _menuZipper = newMenuZipper
           }
       sendMessageForm =
         makeSendMessageForm $
@@ -116,6 +134,8 @@ handleEvent :: UIState -> BrickEvent Name Event -> EventM Name (Next UIState)
 handleEvent state (AppEvent (FlashEvent e)) = handleFlashMessageEvent state e
 handleEvent state (AppEvent (CurrentQueueAttributes maybeAttributes)) = do
   continue $ state & queueAttributes .~ maybeAttributes
+handleEvent state (VtyEvent (Vty.EvKey (Vty.KFun 2) [])) =
+  continue $ state & screen .~ MenuScreen (state ^. screen)
 handleEvent state (VtyEvent (Vty.EvKey (Vty.KChar 'q') [Vty.MCtrl])) = halt state
 handleEvent state (VtyEvent (Vty.EvKey (Vty.KChar 't') [Vty.MCtrl])) =
   continue $ state & screen .~ LoadTemplateScreen
@@ -123,6 +143,10 @@ handleEvent state@UIState {_screen = SendMessageScreen, sendMessageForm} event =
   handleSendMessageForm state sendMessageForm event
 handleEvent state@UIState {_screen = LoadTemplateScreen, loadTemplateForm} event =
   handleLoadTemplateForm state loadTemplateForm event
+handleEvent state@UIState {_screen = MenuScreen previousScreen, _menuZipper} event =
+  handleMenuScreen state event previousScreen
+handleEvent state@UIState {_screen = HelpScreen previousScreen, _menuZipper} event =
+  handleHelpScreen state event previousScreen
 
 handleFlashMessageEvent :: UIState -> FlashMessageEvent -> EventM Name (Next UIState)
 handleFlashMessageEvent state (RemoveFlashMessage i) =
@@ -162,7 +186,7 @@ handleSendMessage state form = do
       newState <-
         liftIO $
           addFlashMessage state $
-            FlashError $ "Failed to send message"
+            FlashError "Failed to send message"
       continue newState
     Left err -> do
       newState <-
@@ -178,7 +202,7 @@ handlePurgeQueue state form = do
   result <- liftIO $ AWS.runResourceT $ AWS.runAWS (state ^. awsEnv) $ SQS.purgeQueue url
   newState <- case result of
     Right () -> do
-      liftIO $ addFlashMessage state $ FlashSuccess $ "Queue purged"
+      liftIO $ addFlashMessage state $ FlashSuccess "Queue purged"
     Left err -> do
       liftIO $ addFlashMessage state $ FlashError $ awsErrorToText err
   continue newState
@@ -208,11 +232,41 @@ handleLoadTemplateForm state form event = do
   formState <- handleFormEvent event form
   continue $ state {loadTemplateForm = formState}
 
+handleMenuScreen ::
+  UIState ->
+  BrickEvent Name Event ->
+  Screen ->
+  EventM Name (Next UIState)
+handleMenuScreen state (VtyEvent (Vty.EvKey (Vty.KChar 'j') [])) _previousScreen =
+  continue $ state & menuZipper %~ menuFocusDown
+handleMenuScreen state (VtyEvent (Vty.EvKey (Vty.KChar 'k') [])) _previousScreen =
+  continue $ state & menuZipper %~ menuFocusUp
+handleMenuScreen state (VtyEvent (Vty.EvKey Vty.KEsc [])) previousScreen =
+  continue $ state & screen .~ previousScreen
+handleMenuScreen state (VtyEvent (Vty.EvKey Vty.KEnter [])) previousScreen =
+  state ^. menuZipper . menuFocus & menuItemEnter state previousScreen
+handleMenuScreen state _event _previousScreen =
+  continue state
+
+handleHelpScreen ::
+  UIState ->
+  BrickEvent Name Event ->
+  Screen ->
+  EventM Name (Next UIState)
+handleHelpScreen state (VtyEvent (Vty.EvKey Vty.KEsc [])) previousScreen =
+  continue $ state & screen .~ previousScreen
+handleHelpScreen state _event _previousScreen =
+  continue state
+
 drawUI :: UIState -> [Widget Name]
 drawUI state@UIState {_screen = SendMessageScreen, _flashMessages} =
   [centerLayer $ drawFlashMessages _flashMessages, drawSendMessageScreen state]
 drawUI state@UIState {_screen = LoadTemplateScreen, _flashMessages} =
   [centerLayer $ drawFlashMessages _flashMessages, drawLoadTemplateScreen state]
+drawUI state@UIState {_screen = MenuScreen _previousScreen, _flashMessages} =
+  [centerLayer $ drawFlashMessages _flashMessages, drawMenuScreen state]
+drawUI UIState {_screen = HelpScreen _previousScreen, _flashMessages} =
+  [centerLayer $ drawFlashMessages _flashMessages, drawHelpScreen]
 
 drawFlashMessages :: Map Int FlashMessage -> Widget Name
 drawFlashMessages m = vBox $ map drawFlashMessage $ Map.elems m
@@ -265,6 +319,36 @@ drawLoadTemplateScreen UIState {loadTemplateForm} = do
       borderWithLabel (str "Content") (hCenter $ str templateText <=> fill ' ')
     ]
 
+drawMenuScreen :: UIState -> Widget Name
+drawMenuScreen UIState {_menuZipper} =
+  renderMenuZipper _menuZipper
+
+drawHelpScreen :: Widget Name
+drawHelpScreen =
+  borderWithLabel (str "Help") $
+    hCenter $
+      vBox
+        [ str "Ctrl + s: Send message to queue",
+          str "Ctrl + t: Load a template into the message field",
+          str "F2: Show menu",
+          str "Ctrl + q: Quit"
+        ]
+
+renderMenuZipper :: MenuZipper -> Widget Name
+renderMenuZipper zipper = do
+  let upItems = zipper ^. menuUp & map (renderMenuItem False)
+      downItems = zipper ^. menuDown & map (renderMenuItem False)
+      focusItem = zipper ^. menuFocus & renderMenuItem True
+  borderWithLabel (str "Menu") $
+    hCenter (vBox $ upItems <> [focusItem] <> downItems) <=> fill ' '
+
+renderMenuItem :: Bool -> MenuItem -> Widget Name
+renderMenuItem isFocused item = do
+  let itemText = case item of
+        MenuHelp -> "Help"
+        MenuQuit -> "Quit"
+  withAttr (if isFocused then menuItemFocusAttr else menuItemAttr) $ str itemText
+
 makeSendMessageForm :: SendMessageData -> Form SendMessageData e Name
 makeSendMessageForm =
   newForm
@@ -292,7 +376,9 @@ attrMapForState _state =
     [ (focusedFormInputAttr, Vty.black `Brick.on` Vty.yellow),
       (invalidFormInputAttr, Vty.white `Brick.on` Vty.red),
       (flashSuccessAttr, Vty.white `Brick.on` Vty.green),
-      (flashErrorAttr, Vty.white `Brick.on` Vty.red)
+      (flashErrorAttr, Vty.white `Brick.on` Vty.red),
+      (menuItemAttr, fg Vty.white),
+      (menuItemFocusAttr, Vty.black `Brick.on` Vty.yellow)
     ]
 
 chooseCursor :: UIState -> [CursorLocation Name] -> Maybe (CursorLocation Name)
@@ -300,6 +386,10 @@ chooseCursor UIState {_screen = SendMessageScreen, sendMessageForm} =
   focusRingCursor formFocus sendMessageForm
 chooseCursor UIState {_screen = LoadTemplateScreen, loadTemplateForm} =
   focusRingCursor formFocus loadTemplateForm
+chooseCursor UIState {_screen = MenuScreen _previousScreen} =
+  const Nothing
+chooseCursor UIState {_screen = HelpScreen _previousScreen} =
+  const Nothing
 
 addFlashMessage :: UIState -> FlashMessage -> IO UIState
 addFlashMessage state msg = do
@@ -336,3 +426,30 @@ awsErrorToText
         }
     ) =
     "Unknown service error: " <> code
+
+menuItemEnter :: UIState -> Screen -> MenuItem -> EventM Name (Next UIState)
+menuItemEnter state previousScreen MenuHelp =
+  continue $ state & screen .~ HelpScreen previousScreen
+menuItemEnter state _previousScreen MenuQuit =
+  halt state
+
+newMenuZipper :: MenuZipper
+newMenuZipper = MenuZipper {_menuUp = [], _menuFocus = MenuHelp, _menuDown = [MenuQuit]}
+
+menuFocusUp :: MenuZipper -> MenuZipper
+menuFocusUp MenuZipper {_menuUp = [], _menuFocus, _menuDown} =
+  MenuZipper {_menuUp = [], _menuFocus, _menuDown}
+menuFocusUp MenuZipper {_menuUp = (u : up), _menuFocus, _menuDown = down} =
+  MenuZipper {_menuUp = up, _menuFocus = u, _menuDown = _menuFocus : down}
+
+menuFocusDown :: MenuZipper -> MenuZipper
+menuFocusDown MenuZipper {_menuUp, _menuFocus, _menuDown = []} =
+  MenuZipper {_menuUp, _menuFocus, _menuDown = []}
+menuFocusDown MenuZipper {_menuUp, _menuFocus, _menuDown = (d : down)} =
+  MenuZipper {_menuUp = _menuFocus : _menuUp, _menuFocus = d, _menuDown = down}
+
+menuItemFocusAttr :: AttrName
+menuItemFocusAttr = "menu-item-focus"
+
+menuItemAttr :: AttrName
+menuItemAttr = "menu-item"
