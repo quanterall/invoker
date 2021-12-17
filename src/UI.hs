@@ -239,7 +239,11 @@ handleMenuScreen ::
   EventM Name (Next UIState)
 handleMenuScreen state (VtyEvent (Vty.EvKey (Vty.KChar 'j') [])) _previousScreen =
   continue $ state & menuZipper %~ menuFocusDown
+handleMenuScreen state (VtyEvent (Vty.EvKey Vty.KDown [])) _previousScreen =
+  continue $ state & menuZipper %~ menuFocusDown
 handleMenuScreen state (VtyEvent (Vty.EvKey (Vty.KChar 'k') [])) _previousScreen =
+  continue $ state & menuZipper %~ menuFocusUp
+handleMenuScreen state (VtyEvent (Vty.EvKey Vty.KUp [])) _previousScreen =
   continue $ state & menuZipper %~ menuFocusUp
 handleMenuScreen state (VtyEvent (Vty.EvKey Vty.KEsc [])) previousScreen =
   continue $ state & screen .~ previousScreen
