@@ -334,6 +334,7 @@ drawHelpScreen =
       vBox
         [ str "Ctrl + s: Send message to queue",
           str "Ctrl + t: Load a template into the message field",
+          str "Ctrl + d: Purge the queue",
           str "F2: Show menu",
           str "Ctrl + q: Quit"
         ]
