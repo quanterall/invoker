@@ -3,6 +3,8 @@
 module Main (main) where
 
 import Import
+import Network.AWS.QAWS (EnvironmentFile (..))
+import Network.AWS.QAWS.SQS.Types (QueueUrl (..))
 import Options.Applicative.Simple
 import qualified Paths_invoker
 import RIO.Process
@@ -29,11 +31,12 @@ main = do
                 <> help "Queue name"
                 <> value Nothing
             )
-          <*> strOption
+          <*> option
+            (maybeReader readEnvironmentFile)
             ( long "environment-file"
                 <> short 'e'
                 <> help "Environment file to read configuration from"
-                <> value ".env"
+                <> value (EnvironmentFile ".env")
             )
       )
       empty
@@ -50,3 +53,6 @@ main = do
 
 readQueueUrl :: String -> Maybe (Maybe QueueUrl)
 readQueueUrl = pack >>> QueueUrl >>> Just >>> Just
+
+readEnvironmentFile :: String -> Maybe EnvironmentFile
+readEnvironmentFile = EnvironmentFile >>> Just

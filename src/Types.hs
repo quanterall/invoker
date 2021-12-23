@@ -4,6 +4,8 @@ module Types where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), defaultOptions, genericParseJSON, genericToJSON)
 import Lens.Micro.TH (makeLenses)
+import Network.AWS.QAWS (EnvironmentFile)
+import Network.AWS.QAWS.SQS.Types (QueueUrl)
 import RIO
 import RIO.Process
 
@@ -11,7 +13,7 @@ import RIO.Process
 data Options = Options
   { verbose :: !Bool,
     defaultQueueUrl :: !(Maybe QueueUrl),
-    environmentFile :: !FilePath
+    environmentFile :: !EnvironmentFile
   }
   deriving (Show, Eq, Generic)
 
@@ -33,12 +35,6 @@ instance HasLogFunc App where
 
 instance HasProcessContext App where
   processContextL = lens appProcessContext (\x y -> x {appProcessContext = y})
-
-newtype QueueUrl = QueueUrl {_queueUrl' :: Text}
-  deriving (Eq, Show, Generic, ToJSON, FromJSON)
-  deriving newtype (Read)
-
-makeLenses ''QueueUrl
 
 data MessageTemplate = MessageTemplate
   { _templateName :: !Text,

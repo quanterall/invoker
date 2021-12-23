@@ -12,12 +12,12 @@ import qualified Graphics.Vty as Vty
 import Import hiding (App)
 import Lens.Micro.TH (makeLenses)
 import qualified Network.AWS as AWS
+import qualified Network.AWS.QAWS.SQS as SQS
+import Network.AWS.QAWS.SQS.Types
 import qualified RIO.Map as Map
 import RIO.Text (pack, unpack)
 import RIO.Vector ((!?))
 import qualified RIO.Vector as Vector
-import SQS (QueueAttributes (..))
-import qualified SQS
 import Templates
 
 data Name
@@ -39,7 +39,7 @@ data FlashMessageEvent
 
 data Event
   = FlashEvent !FlashMessageEvent
-  | CurrentQueueAttributes !(Maybe SQS.QueueAttributes)
+  | CurrentQueueAttributes !(Maybe QueueAttributes)
   deriving (Eq, Show)
 
 data SendMessageData = SendMessageData
@@ -84,7 +84,7 @@ data UIState = UIState
     _awsEnv :: !AWS.Env,
     _flashMessages :: !(Map Int FlashMessage),
     _flashMessageCounter :: !Int,
-    _queueAttributes :: !(Maybe SQS.QueueAttributes),
+    _queueAttributes :: !(Maybe QueueAttributes),
     _eventChannel :: !(BChan Event),
     _currentQueueUrlRef :: !(TVar (Maybe QueueUrl)),
     _menuZipper :: !MenuZipper
@@ -305,13 +305,13 @@ renderQueueAttributes
       hCenter $
         hBox
           [ str "Messages: ",
-            str $ maybe "N/A" show queueAttributesMessages,
+            str $ maybe "N/A" (_unMessageCount >>> show) queueAttributesMessages,
             str " | ",
             str "Delayed: ",
-            str $ maybe "N/A" show queueAttributesDelayedMessages,
+            str $ maybe "N/A" (_unDelayedMessageCount >>> show) queueAttributesDelayedMessages,
             str " | ",
             str "Not Visible: ",
-            str $ maybe "N/A" show queueAttributesNotVisibleMessages
+            str $ maybe "N/A" (_unNotVisibleCount >>> show) queueAttributesNotVisibleMessages
           ]
 
 drawLoadTemplateScreen :: UIState -> Widget Name
@@ -357,7 +357,7 @@ makeSendMessageForm :: SendMessageData -> Form SendMessageData e Name
 makeSendMessageForm =
   newForm
     [ borderWithLabel (str "Queue URL")
-        @@= editTextField (queueUrl . queueUrl') QueueUrlField (Just 1),
+        @@= editTextField (queueUrl . unQueueUrl) QueueUrlField (Just 1),
       borderWithLabel (str "Message") @@= editTextField message MessageField Nothing
     ]
 

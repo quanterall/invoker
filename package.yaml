@@ -22,8 +22,6 @@ dependencies:
 - base >= 4.11 && < 10
 - rio >= 0.1.12.0
 - amazonka
-- amazonka-core
-- amazonka-sqs
 - brick
 - vty
 - transformers
@@ -32,6 +30,8 @@ dependencies:
 - lens
 - mtl
 - directory
+- qaws-sqs
+- qaws
 
 default-extensions:
 - ApplicativeDo
