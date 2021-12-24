@@ -19,31 +19,31 @@ packages:
   original:
     hackage: unliftio-core-0.1.2.0@sha256:b0a7652ffce2284a6cebe05c99eb60573a8fb6631163f34b0b30a80b4a78cb23,1081
 - completed:
-    size: 7654
+    size: 7721
     subdir: qaws
-    url: https://github.com/quanterall/qaws/archive/2f5e3b836394ab644f683da5e347e84068b2b801.tar.gz
+    url: https://github.com/quanterall/qaws/archive/864a9380fcd32d567e67083216d1ea6c50078423.tar.gz
     name: qaws
     version: 0.0.0
-    sha256: c2041f714038376d091b8d6205d4fefb5217c8a596799be1cb3fc5f9de4c9ab5
+    sha256: 7090bc0d7f97d275139ed215d4ba3a9ef15a7a72027d77ce8bbd1a0b469e349c
     pantry-tree:
-      size: 272
-      sha256: 771215c639b8b95b62fc1ab85dca3df144f90b7e2fd189a9fdac77d72248182a
+      size: 341
+      sha256: c74b7d4d09163385a7a6d7c0fccb4ae76edc069dec28f7304e2841687c690a1f
   original:
     subdir: qaws
-    url: https://github.com/quanterall/qaws/archive/2f5e3b836394ab644f683da5e347e84068b2b801.tar.gz
+    url: https://github.com/quanterall/qaws/archive/864a9380fcd32d567e67083216d1ea6c50078423.tar.gz
 - completed:
-    size: 7654
+    size: 7721
     subdir: qaws-sqs
-    url: https://github.com/quanterall/qaws/archive/2f5e3b836394ab644f683da5e347e84068b2b801.tar.gz
+    url: https://github.com/quanterall/qaws/archive/864a9380fcd32d567e67083216d1ea6c50078423.tar.gz
     name: qaws-sqs
     version: 0.0.0
-    sha256: c2041f714038376d091b8d6205d4fefb5217c8a596799be1cb3fc5f9de4c9ab5
+    sha256: 7090bc0d7f97d275139ed215d4ba3a9ef15a7a72027d77ce8bbd1a0b469e349c
     pantry-tree:
       size: 352
-      sha256: 769f760edb53a1622cd2297cf4ce24b523e1329de9d0e3047799bd6fd6f48913
+      sha256: 9c3ed093e3054680d5e7e08e22714a0c832ea3abf82e7032fcbb1c42062f5134
   original:
     subdir: qaws-sqs
-    url: https://github.com/quanterall/qaws/archive/2f5e3b836394ab644f683da5e347e84068b2b801.tar.gz
+    url: https://github.com/quanterall/qaws/archive/864a9380fcd32d567e67083216d1ea6c50078423.tar.gz
 snapshots:
 - completed:
     size: 586069
