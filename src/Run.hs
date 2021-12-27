@@ -5,9 +5,10 @@ import Import
 import Network.AWS.QAWS
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
+import Qtility.Data (hush)
+import Qtility.Environment
+import Qtility.Environment.Types
 import RIO.FilePath ((</>))
-import qualified RIO.Text as Text
-import qualified System.Environment as Environment
 import Templates
 import UI
 
@@ -23,7 +24,8 @@ run Options {defaultQueueUrl, environmentFile} = do
     Right env -> do
       templates' <- liftIO loadTemplates `catchIO` \_ -> pure []
       defaultQueueUrlFromFile <- liftIO loadQueueUrlFromFile
-      defaultQueueUrlFromEnv <- liftIO loadQueueUrlFromEnv
+      defaultQueueUrlFromEnv <-
+        hush <$> liftIO (loadEnvironmentVariable $ EnvironmentKey "QUEUE_URL")
       let defaultUrl =
             defaultQueueUrl
               <|> defaultQueueUrlFromEnv
@@ -45,11 +47,3 @@ run Options {defaultQueueUrl, environmentFile} = do
 loadQueueUrlFromFile :: IO (Either IOException QueueUrl)
 loadQueueUrlFromFile = do
   fmap QueueUrl <$> tryIO (readFileUtf8 (".invoker" </> "queue"))
-
-loadQueueUrlFromEnv :: IO (Maybe QueueUrl)
-loadQueueUrlFromEnv = do
-  queueUrlString <- Environment.getEnv "QUEUE_URL"
-  pure $
-    if null queueUrlString
-      then Nothing
-      else queueUrlString & Text.pack & QueueUrl & Just

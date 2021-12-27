@@ -32,6 +32,8 @@ dependencies:
 - directory
 - qaws-sqs
 - qaws
+- qtility-environment
+- qtility-data
 
 default-extensions:
 - ApplicativeDo

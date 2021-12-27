@@ -4,8 +4,8 @@ module Types where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), defaultOptions, genericParseJSON, genericToJSON)
 import Lens.Micro.TH (makeLenses)
-import Network.AWS.QAWS (EnvironmentFile)
 import Network.AWS.QAWS.SQS.Types (QueueUrl)
+import Qtility.Environment.Types (EnvironmentFile)
 import RIO
 import RIO.Process
 
