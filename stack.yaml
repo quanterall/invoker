@@ -9,12 +9,12 @@ extra-deps:
 - amazonka-1.6.1@sha256:f58b63e83876f93aa03c54e54b3eb8ba9358af93819d41f4a5a8f8b7d8b8399c,3544
 - unliftio-core-0.1.2.0@sha256:b0a7652ffce2284a6cebe05c99eb60573a8fb6631163f34b0b30a80b4a78cb23,1081
 - github: quanterall/qaws
-  commit: 4d1574fa644667935a853c0072f4b660791b419f
+  commit: e133dcf02eb4eb65ccb17df6101e7ce47c141cca
   subdirs:
   - qaws
   - qaws-sqs
 - github: quanterall/qtility
-  commit: 066c07a4281773a4471b88a51b1a34e9120a0a0c
+  commit: 257ba00f1a23709967f009e34587a635d1a3ae8e
   subdirs:
   - qtility-environment
   - qtility-data

@@ -6,7 +6,7 @@ import Network.AWS.QAWS (loadAWSEnvironment)
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
 import Qtility.Data (hush)
-import Qtility.Environment (loadEnvironmentVariable)
+import Qtility.Environment (readEnvironmentVariable)
 import Qtility.Environment.Types
 import RIO.FilePath ((</>))
 import qualified Templates
@@ -25,7 +25,7 @@ run Options {defaultQueueUrl, environmentFile} = do
       templates' <- liftIO Templates.loadTemplates `catchIO` \_ -> pure []
       defaultQueueUrlFromFile <- liftIO loadQueueUrlFromFile
       defaultQueueUrlFromEnv <-
-        hush <$> liftIO (loadEnvironmentVariable $ EnvironmentKey "QUEUE_URL")
+        hush <$> liftIO (readEnvironmentVariable $ EnvironmentKey "QUEUE_URL")
       let defaultUrl =
             defaultQueueUrl
               <|> defaultQueueUrlFromEnv
