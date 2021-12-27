@@ -2,15 +2,15 @@ module Run (run) where
 
 import Brick.BChan (newBChan, writeBChan)
 import Import
-import Network.AWS.QAWS
+import Network.AWS.QAWS (loadAWSEnvironment)
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
 import Qtility.Data (hush)
-import Qtility.Environment
+import Qtility.Environment (loadEnvironmentVariable)
 import Qtility.Environment.Types
 import RIO.FilePath ((</>))
-import Templates
-import UI
+import qualified Templates
+import qualified UI
 
 run :: Options -> RIO App ()
 run Options {defaultQueueUrl, environmentFile} = do
@@ -22,7 +22,7 @@ run Options {defaultQueueUrl, environmentFile} = do
       logError $ displayShow e
       exitFailure
     Right env -> do
-      templates' <- liftIO loadTemplates `catchIO` \_ -> pure []
+      templates' <- liftIO Templates.loadTemplates `catchIO` \_ -> pure []
       defaultQueueUrlFromFile <- liftIO loadQueueUrlFromFile
       defaultQueueUrlFromEnv <-
         hush <$> liftIO (loadEnvironmentVariable $ EnvironmentKey "QUEUE_URL")
@@ -40,9 +40,9 @@ run Options {defaultQueueUrl, environmentFile} = do
               Just queueUrl -> do
                 response <- SQS.getQueueAttributes' env queueUrl
                 let maybeAttributes = either (const Nothing) Just response
-                writeBChan _eventChannel (CurrentQueueAttributes maybeAttributes)
+                writeBChan _eventChannel (UI.CurrentQueueAttributes maybeAttributes)
             threadDelay $ 2 * 1000 * 1000
-      liftIO $ startUI currentQueueUrlRef _eventChannel env defaultUrl templates'
+      liftIO $ UI.startUI currentQueueUrlRef _eventChannel env defaultUrl templates'
 
 loadQueueUrlFromFile :: IO (Either IOException QueueUrl)
 loadQueueUrlFromFile = do

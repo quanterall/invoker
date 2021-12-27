@@ -7,9 +7,9 @@ import Network.AWS.QAWS.SQS.Types (QueueUrl (..))
 import Options.Applicative.Simple
 import qualified Paths_invoker
 import Qtility.Environment.Types (EnvironmentFile (..))
-import RIO.Process
+import RIO.Process (mkDefaultProcessContext)
 import RIO.Text (pack)
-import Run
+import Run (run)
 
 main :: IO ()
 main = do
