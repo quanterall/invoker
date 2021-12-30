@@ -92,7 +92,13 @@ data UIState = UIState
 
 makeLenses ''UIState
 
-startUI :: TVar (Maybe QueueUrl) -> BChan Event -> AWS.Env -> Maybe QueueUrl -> [MessageTemplate] -> IO ()
+startUI ::
+  TVar (Maybe QueueUrl) ->
+  BChan Event ->
+  AWS.Env ->
+  Maybe QueueUrl ->
+  [MessageTemplate] ->
+  IO ()
 startUI _currentQueueUrlRef _eventChannel awsEnv' maybeQueueUrl templates' = do
   let buildVty = Vty.mkVty Vty.defaultConfig
   initialVty <- buildVty
@@ -173,7 +179,7 @@ handleSendMessage state form = do
   let url = formState form ^. queueUrl
       message' = formState form ^. message
       awsEnv' = state ^. awsEnv
-  result <- liftIO $ AWS.runResourceT $ AWS.runAWS awsEnv' $ SQS.sendMessage url message'
+  result <- liftIO $ SQS.sendMessage' awsEnv' url message'
   liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
   case result of
     Right (Just messageId) -> do
@@ -199,7 +205,7 @@ handlePurgeQueue :: UIState -> Form SendMessageData Event Name -> EventM Name (N
 handlePurgeQueue state form = do
   let url = formState form ^. queueUrl
   liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
-  result <- liftIO $ AWS.runResourceT $ AWS.runAWS (state ^. awsEnv) $ SQS.purgeQueue url
+  result <- liftIO $ SQS.purgeQueue' (state ^. awsEnv) url
   newState <- case result of
     Right () -> do
       liftIO $ addFlashMessage state $ FlashSuccess "Queue purged"
