@@ -2,11 +2,9 @@
 
 module Types where
 
-import Data.Aeson (FromJSON (..), ToJSON (..), defaultOptions, genericParseJSON, genericToJSON)
 import Lens.Micro.TH (makeLenses)
 import Network.AWS.QAWS.SQS.Types (QueueUrl)
-import Qtility.Environment.Types (EnvironmentFile)
-import RIO
+import Qtility.Standard
 import RIO.Process
 
 -- | Command line arguments
@@ -18,10 +16,10 @@ data Options = Options
   deriving (Show, Eq, Generic)
 
 instance FromJSON Options where
-  parseJSON = genericParseJSON defaultOptions
+  parseJSON = genericParseJSON defaultAesonOptions
 
 instance ToJSON Options where
-  toJSON = genericToJSON defaultOptions
+  toJSON = genericToJSON defaultAesonOptions
 
 data App = App
   { appLogFunc :: !LogFunc,

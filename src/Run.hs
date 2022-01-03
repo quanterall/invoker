@@ -5,8 +5,6 @@ import Import
 import Network.AWS.QAWS (loadAWSEnvironment)
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
-import Qtility.Environment (readEnvironmentVariable)
-import Qtility.Environment.Types
 import RIO.FilePath ((</>))
 import qualified Templates
 import qualified UI
