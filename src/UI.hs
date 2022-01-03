@@ -225,26 +225,19 @@ drawSendMessageScreen UIState {sendMessageForm, _queueAttributes} =
 
 renderQueueAttributes :: Maybe QueueAttributes -> Widget Name
 renderQueueAttributes Nothing = emptyWidget
-renderQueueAttributes
-  ( Just
-      QueueAttributes
-        { queueAttributesMessages,
-          queueAttributesDelayedMessages,
-          queueAttributesNotVisibleMessages
-        }
-    ) = do
-    borderWithLabel (str "Queue Attributes") $
-      hCenter $
-        hBox
-          [ str "Messages: ",
-            str $ maybe "N/A" (_unMessageCount >>> show) queueAttributesMessages,
-            str " | ",
-            str "Delayed: ",
-            str $ maybe "N/A" (_unDelayedMessageCount >>> show) queueAttributesDelayedMessages,
-            str " | ",
-            str "Not Visible: ",
-            str $ maybe "N/A" (_unNotVisibleCount >>> show) queueAttributesNotVisibleMessages
-          ]
+renderQueueAttributes (Just attributes) = do
+  borderWithLabel (str "Queue Attributes") $
+    hCenter $
+      hBox
+        [ str "Messages: ",
+          str $ maybe "N/A" (_unMessageCount >>> show) (attributes ^. qaMessages),
+          str " | ",
+          str "Delayed: ",
+          str $ maybe "N/A" (_unDelayedMessageCount >>> show) (attributes ^. qaDelayedMessages),
+          str " | ",
+          str "Not Visible: ",
+          str $ maybe "N/A" (_unNotVisibleCount >>> show) (attributes ^. qaNotVisibleMessages)
+        ]
 
 drawLoadTemplateScreen :: UIState -> Widget Name
 drawLoadTemplateScreen UIState {loadTemplateForm} = do
