@@ -24,16 +24,8 @@ dependencies:
 - amazonka
 - brick
 - vty
-- transformers
-- aeson
-- microlens-th
-- lens
-- mtl
-- directory
 - qaws-sqs
 - qaws
-- qtility-environment
-- qtility-data
 - qtility-standard
 
 default-extensions:

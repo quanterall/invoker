@@ -2,7 +2,6 @@
 
 module Types where
 
-import Lens.Micro.TH (makeLenses)
 import Network.AWS.QAWS.SQS.Types (QueueUrl)
 import Qtility.Standard
 import RIO.Process

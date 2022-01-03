@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module UI (startUI, Event (..)) where
 
 import Brick
@@ -10,7 +8,6 @@ import Brick.Widgets.Border
 import Brick.Widgets.Center
 import qualified Graphics.Vty as Vty
 import Import hiding (App)
-import Lens.Micro.TH (makeLenses)
 import qualified Network.AWS as AWS
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
@@ -19,78 +16,7 @@ import RIO.Text (pack, unpack)
 import RIO.Vector ((!?))
 import qualified RIO.Vector as Vector
 import Templates
-
-data Name
-  = QueueUrlField
-  | MessageField
-  | TemplateListField
-  deriving (Eq, Ord, Show)
-
-data Screen
-  = SendMessageScreen
-  | LoadTemplateScreen
-  | MenuScreen Screen
-  | HelpScreen Screen
-  deriving (Eq, Ord, Show)
-
-data FlashMessageEvent
-  = RemoveFlashMessage !Int
-  deriving (Eq, Show)
-
-data Event
-  = FlashEvent !FlashMessageEvent
-  | CurrentQueueAttributes !(Maybe QueueAttributes)
-  deriving (Eq, Show)
-
-data SendMessageData = SendMessageData
-  { _queueUrl :: !QueueUrl,
-    _message :: !Text
-  }
-  deriving (Eq, Show, Generic)
-
-makeLenses ''SendMessageData
-
-data LoadTemplateData = LoadTemplateData
-  { _chosenTemplate :: !(Maybe MessageTemplate),
-    templates :: !(Vector MessageTemplate)
-  }
-  deriving (Eq, Show)
-
-makeLenses ''LoadTemplateData
-
-data FlashMessage
-  = FlashSuccess !Text
-  | FlashError !Text
-  deriving (Eq, Show)
-
-data MenuItem
-  = MenuHelp
-  | MenuQuit
-  deriving (Eq, Show)
-
-data MenuZipper = MenuZipper
-  { _menuUp :: ![MenuItem],
-    _menuFocus :: !MenuItem,
-    _menuDown :: ![MenuItem]
-  }
-  deriving (Eq)
-
-makeLenses ''MenuZipper
-
-data UIState = UIState
-  { _screen :: !Screen,
-    sendMessageForm :: !(Form SendMessageData Event Name),
-    loadTemplateForm :: !(Form LoadTemplateData Event Name),
-    _awsEnv :: !AWS.Env,
-    _flashMessages :: !(Map Int FlashMessage),
-    _flashMessageCounter :: !Int,
-    _queueAttributes :: !(Maybe QueueAttributes),
-    _eventChannel :: !(BChan Event),
-    _currentQueueUrlRef :: !(TVar (Maybe QueueUrl)),
-    _menuZipper :: !MenuZipper
-  }
-
-makeLenses ''UIState
+import UI.Types
 
 startUI ::
   TVar (Maybe QueueUrl) ->
