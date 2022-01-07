@@ -24,12 +24,10 @@ run Options {defaultQueueUrl, environmentFile} = do
     async $
       forever $ do
         currentQueueUrl <- readTVarIO currentQueueUrlRef
-        case currentQueueUrl of
-          Nothing -> pure ()
-          Just queueUrl -> do
-            response <- SQS.getQueueAttributes' env queueUrl
-            let maybeAttributes = either (const Nothing) Just response
-            writeBChan _eventChannel (UI.CurrentQueueAttributes maybeAttributes)
+        forM_ currentQueueUrl $ \url -> do
+          response <- SQS.getQueueAttributes' env url
+          let maybeAttributes = either (const Nothing) Just response
+          writeBChan _eventChannel (UI.CurrentQueueAttributes maybeAttributes)
         threadDelay $ 2 * 1000 * 1000
   liftIO $ UI.startUI currentQueueUrlRef _eventChannel env defaultUrl templates'
 
