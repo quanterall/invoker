@@ -19,15 +19,16 @@ import Templates
 import UI.Types
 
 startUI ::
+  (MonadIO m) =>
   TVar (Maybe QueueUrl) ->
   BChan Event ->
   AWS.Env ->
   Maybe QueueUrl ->
   [MessageTemplate] ->
-  IO ()
+  m ()
 startUI _currentQueueUrlRef _eventChannel awsEnv' maybeQueueUrl templates' = do
   let buildVty = Vty.mkVty Vty.defaultConfig
-  initialVty <- buildVty
+  initialVty <- liftIO buildVty
   let initialState =
         UIState
           { _screen = SendMessageScreen,
@@ -50,7 +51,7 @@ startUI _currentQueueUrlRef _eventChannel awsEnv' maybeQueueUrl templates' = do
       loadTemplateForm =
         makeLoadTemplateForm $ LoadTemplateData {_chosenTemplate = templates !? 0, templates}
       templates = Vector.fromList templates'
-  void $ customMain initialVty buildVty (Just _eventChannel) app initialState
+  liftIO $ void $ customMain initialVty buildVty (Just _eventChannel) app initialState
 
 app :: App UIState Event Name
 app =

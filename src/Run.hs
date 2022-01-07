@@ -29,7 +29,7 @@ run Options {defaultQueueUrl, environmentFile} = do
           let maybeAttributes = either (const Nothing) Just response
           writeBChan _eventChannel (UI.CurrentQueueAttributes maybeAttributes)
         threadDelay $ 2 * 1000 * 1000
-  liftIO $ UI.startUI currentQueueUrlRef _eventChannel env defaultUrl templates'
+  UI.startUI currentQueueUrlRef _eventChannel env defaultUrl templates'
 
 loadQueueUrlFromFile :: IO QueueUrl
 loadQueueUrlFromFile = do
