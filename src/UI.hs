@@ -132,11 +132,11 @@ handlePurgeQueue state form = do
   let url = formState form ^. queueUrl
   liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
   result <- liftIO $ SQS.purgeQueue' (state ^. awsEnv) url
-  newState <- case result of
-    Right () -> do
-      liftIO $ addFlashMessage state $ FlashSuccess "Queue purged"
-    Left err -> do
-      liftIO $ addFlashMessage state $ FlashError $ awsErrorToText err
+  newState <-
+    result
+      & either (awsErrorToText >>> FlashError) (const $ "Queue purged" & FlashSuccess)
+      & addFlashMessage state
+      & liftIO
   continue newState
 
 handleLoadTemplateForm ::
