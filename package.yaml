@@ -27,6 +27,7 @@ dependencies:
 - qaws-sqs
 - qaws
 - qtility-standard
+- rio-orphans
 
 default-extensions:
 - ApplicativeDo

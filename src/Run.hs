@@ -11,7 +11,7 @@ import qualified UI
 
 run :: Options -> RIO App ()
 run Options {defaultQueueUrl, environmentFile} = do
-  env <- liftIO $ loadAWSEnvironment environmentFile
+  env <- loadAWSEnvironment environmentFile
   _eventChannel <- liftIO $ newBChan 20
   templates' <- Templates.loadTemplates `catchIO` \_ -> pure []
   defaultQueueUrlFromFile <- (Just <$> loadQueueUrlFromFile) `catchIO` const (pure Nothing)
