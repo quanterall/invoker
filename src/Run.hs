@@ -13,10 +13,10 @@ run :: Options -> RIO App ()
 run Options {defaultQueueUrl, environmentFile} = do
   env <- liftIO $ loadAWSEnvironment environmentFile
   _eventChannel <- liftIO $ newBChan 20
-  templates' <- liftIO Templates.loadTemplates `catchIO` \_ -> pure []
-  defaultQueueUrlFromFile <- (Just <$> liftIO loadQueueUrlFromFile) `catchIO` const (pure Nothing)
+  templates' <- Templates.loadTemplates `catchIO` \_ -> pure []
+  defaultQueueUrlFromFile <- (Just <$> loadQueueUrlFromFile) `catchIO` const (pure Nothing)
   defaultQueueUrlFromEnv <-
-    (Just <$> liftIO (readEnvironmentVariable $ EnvironmentKey "QUEUE_URL"))
+    (Just <$> readEnvironmentVariable (EnvironmentKey "QUEUE_URL"))
       `catchAny` const (pure Nothing)
   let defaultUrl = defaultQueueUrl <|> defaultQueueUrlFromEnv <|> defaultQueueUrlFromFile
   currentQueueUrlRef <- liftIO $ newTVarIO defaultUrl
@@ -31,6 +31,6 @@ run Options {defaultQueueUrl, environmentFile} = do
         threadDelay $ 2 * 1000 * 1000
   UI.startUI currentQueueUrlRef _eventChannel env defaultUrl templates'
 
-loadQueueUrlFromFile :: IO QueueUrl
+loadQueueUrlFromFile :: (MonadIO m) => m QueueUrl
 loadQueueUrlFromFile = do
   QueueUrl <$> readFileUtf8 (".invoker" </> "queue")
