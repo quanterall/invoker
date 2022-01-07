@@ -136,7 +136,6 @@ handlePurgeQueue state form = do
     result
       & either (awsErrorToText >>> FlashError) (const $ "Queue purged" & FlashSuccess)
       & addFlashMessage state
-      & liftIO
   continue newState
 
 handleLoadTemplateForm ::
@@ -321,12 +320,13 @@ chooseCursor UIState {_screen = MenuScreen _previousScreen} =
 chooseCursor UIState {_screen = HelpScreen _previousScreen} =
   const Nothing
 
-addFlashMessage :: UIState -> FlashMessage -> IO UIState
+addFlashMessage :: (MonadIO m) => UIState -> FlashMessage -> m UIState
 addFlashMessage state msg = do
   let currentId = state ^. flashMessageCounter + 1
-  async $ do
-    threadDelay $ 4 * 1000 * 1000
-    writeBChan (state ^. eventChannel) $ FlashEvent $ RemoveFlashMessage currentId
+  liftIO $
+    async $ do
+      threadDelay $ 4 * 1000 * 1000
+      writeBChan (state ^. eventChannel) $ FlashEvent $ RemoveFlashMessage currentId
   pure $
     state
       & flashMessages %~ Map.insert currentId msg
