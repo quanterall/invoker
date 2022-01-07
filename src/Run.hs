@@ -19,7 +19,7 @@ run Options {defaultQueueUrl, environmentFile} = do
     (Just <$> readEnvironmentVariable (EnvironmentKey "QUEUE_URL"))
       `catchAny` const (pure Nothing)
   let defaultUrl = defaultQueueUrl <|> defaultQueueUrlFromEnv <|> defaultQueueUrlFromFile
-  currentQueueUrlRef <- liftIO $ newTVarIO defaultUrl
+  currentQueueUrlRef <- newTVarIO defaultUrl
   _queueAttributeThread <- liftIO $
     async $
       forever $ do
