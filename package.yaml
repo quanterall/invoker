@@ -28,6 +28,7 @@ dependencies:
 - qaws
 - qtility-standard
 - rio-orphans
+- quanterall-brick
 
 default-extensions:
 - ApplicativeDo

@@ -6,12 +6,19 @@ import Brick.Focus (focusRingCursor)
 import Brick.Forms
 import Brick.Widgets.Border
 import Brick.Widgets.Center
+import Brick.Widgets.FlashMessages
+  ( addFlashMessage,
+    drawFlashMessages,
+    flashErrorAttr,
+    flashSuccessAttr,
+    handleFlashMessageEvent,
+  )
+import Brick.Widgets.FlashMessages.Types (FlashMessage (..))
 import qualified Graphics.Vty as Vty
 import Import hiding (App)
 import qualified Network.AWS as AWS
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
-import qualified RIO.Map as Map
 import RIO.Text (pack, unpack)
 import RIO.Vector ((!?))
 import qualified RIO.Vector as Vector
@@ -80,10 +87,6 @@ handleEvent state@UIState {_screen = MenuScreen previousScreen, _menuZipper} eve
   handleMenuScreen state event previousScreen
 handleEvent state@UIState {_screen = HelpScreen previousScreen, _menuZipper} event =
   handleHelpScreen state event previousScreen
-
-handleFlashMessageEvent :: UIState -> FlashMessageEvent -> EventM Name (Next UIState)
-handleFlashMessageEvent state (RemoveFlashMessage i) =
-  continue $ state & flashMessages %~ Map.delete i
 
 handleSendMessageForm ::
   UIState ->
@@ -195,29 +198,14 @@ handleHelpScreen state _event _previousScreen =
   continue state
 
 drawUI :: UIState -> [Widget Name]
-drawUI state@UIState {_screen = SendMessageScreen, _flashMessages} =
-  [centerLayer $ drawFlashMessages _flashMessages, drawSendMessageScreen state]
+drawUI state@UIState {_screen = SendMessageScreen} =
+  [centerLayer $ drawFlashMessages state, drawSendMessageScreen state]
 drawUI state@UIState {_screen = LoadTemplateScreen, _flashMessages} =
-  [centerLayer $ drawFlashMessages _flashMessages, drawLoadTemplateScreen state]
+  [centerLayer $ drawFlashMessages state, drawLoadTemplateScreen state]
 drawUI state@UIState {_screen = MenuScreen _previousScreen, _flashMessages} =
-  [centerLayer $ drawFlashMessages _flashMessages, drawMenuScreen state]
-drawUI UIState {_screen = HelpScreen _previousScreen, _flashMessages} =
-  [centerLayer $ drawFlashMessages _flashMessages, drawHelpScreen]
-
-drawFlashMessages :: Map Int FlashMessage -> Widget Name
-drawFlashMessages m = vBox $ map drawFlashMessage $ Map.elems m
-
-drawFlashMessage :: FlashMessage -> Widget Name
-drawFlashMessage flashMessage = do
-  let (flashAttribute, title, body) =
-        case flashMessage of
-          FlashSuccess b ->
-            (flashSuccessAttr, "Success", b)
-          FlashError b ->
-            (flashErrorAttr, "Error", b)
-  withAttr flashAttribute $
-    padAll 1 $
-      borderWithLabel (str $ unpack title) (str $ unpack body)
+  [centerLayer $ drawFlashMessages state, drawMenuScreen state]
+drawUI state@UIState {_screen = HelpScreen _previousScreen} =
+  [centerLayer $ drawFlashMessages state, drawHelpScreen]
 
 drawSendMessageScreen :: UIState -> Widget Name
 drawSendMessageScreen UIState {sendMessageForm, _queueAttributes} =
@@ -320,24 +308,6 @@ chooseCursor UIState {_screen = MenuScreen _previousScreen} =
   const Nothing
 chooseCursor UIState {_screen = HelpScreen _previousScreen} =
   const Nothing
-
-addFlashMessage :: (MonadIO m) => UIState -> FlashMessage -> m UIState
-addFlashMessage state msg = do
-  let currentId = state ^. flashMessageCounter + 1
-  liftIO $
-    async $ do
-      threadDelay $ 4 * 1000 * 1000
-      writeBChan (state ^. eventChannel) $ FlashEvent $ RemoveFlashMessage currentId
-  pure $
-    state
-      & flashMessages %~ Map.insert currentId msg
-      & flashMessageCounter %~ (+ 1)
-
-flashSuccessAttr :: AttrName
-flashSuccessAttr = "flash-success"
-
-flashErrorAttr :: AttrName
-flashErrorAttr = "flash-error"
 
 awsErrorToText :: AWS.Error -> Text
 awsErrorToText (AWS.TransportError httpException) =
