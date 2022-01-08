@@ -19,96 +19,96 @@ packages:
   original:
     hackage: unliftio-core-0.1.2.0@sha256:b0a7652ffce2284a6cebe05c99eb60573a8fb6631163f34b0b30a80b4a78cb23,1081
 - completed:
-    size: 34043
+    size: 34502
     subdir: qtility-standard
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: qtility-standard
     version: 0.0.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 332
       sha256: caa1626a917083011f836d2f232e72fb2152df7089b88d1c798ead0458722d9c
   original:
     subdir: qtility-standard
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 - completed:
-    size: 34043
+    size: 34502
     subdir: qtility-data
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: qtility-data
     version: 0.0.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 389
       sha256: a1cf066b8999fcee51633ebbdc041a42f3428669bc96796b6bf36618217e30fd
   original:
     subdir: qtility-data
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 - completed:
-    size: 34043
+    size: 34502
     subdir: qtility-environment
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: qtility-environment
     version: 0.0.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 426
       sha256: 5d41b7cf3335df0632647bfbfcd6e52ad2d48c08e4226c6f3e6d797053b17267
   original:
     subdir: qtility-environment
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 - completed:
-    size: 34043
+    size: 34502
     subdir: qtility-th
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: qtility-th
     version: 0.0.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 501
       sha256: 3eaa1190f131da817bb2a9440e7ccf91948b4f35df04370ecec7f9f609585236
   original:
     subdir: qtility-th
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 - completed:
-    size: 34043
+    size: 34502
     subdir: qaws
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: qaws
     version: 0.0.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 341
       sha256: 3597558f44ed58317309b87fbc2800a2e2df44f0b11edfd87acc830778f22baa
   original:
     subdir: qaws
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 - completed:
-    size: 34043
+    size: 34502
     subdir: qaws-sqs
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: qaws-sqs
     version: 0.0.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 352
       sha256: b0b832a65387bdeae399721dfe057555a015e01f8fb7b81ddd0a2dceb8773eb5
   original:
     subdir: qaws-sqs
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 - completed:
-    size: 34043
+    size: 34502
     subdir: quanterall-brick
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
     name: quanterall-brick
     version: 0.1.0
-    sha256: 374ef7d11363ed29cadf3fabf3bdf89e9faff933a57a4450bd2e8307b18870e9
+    sha256: e82df476fd0195ac54aa6dde035061f2254e62b59979ccda51c78d3017a2a823
     pantry-tree:
       size: 697
-      sha256: 13c8ef37717b2f417392129b36b4362fc97a1aa457b00f7c68ecd4a35aca3cbd
+      sha256: 889d5ae3500f72a8cbe55e27b9c208c3f28c9ab1fbb3f937dc409852fbd05755
   original:
     subdir: quanterall-brick
-    url: https://github.com/quanterall/qtility/archive/a06b81c12224c9f98cba9346488af7aab9f9ef8b.tar.gz
+    url: https://github.com/quanterall/qtility/archive/8abac3cc2b8e3a0de10c582cdf9aac4cad5e209a.tar.gz
 snapshots:
 - completed:
     size: 586069

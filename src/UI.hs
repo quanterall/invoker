@@ -71,7 +71,8 @@ app =
     }
 
 handleEvent :: UIState -> BrickEvent Name Event -> EventM Name (Next UIState)
-handleEvent state (AppEvent (FlashEvent e)) = handleFlashMessageEvent state e
+handleEvent state (AppEvent (FlashEvent e)) =
+  handleFlashMessageEvent state e >>= continue
 handleEvent state (AppEvent (CurrentQueueAttributes maybeAttributes)) = do
   continue $ state & queueAttributes .~ maybeAttributes
 handleEvent state (VtyEvent (Vty.EvKey (Vty.KFun 2) [])) =
