@@ -9,7 +9,7 @@ import Brick.Widgets.FlashMessages.Class (AsFlashMessageEvent (..), HasFlashMess
 import Brick.Widgets.FlashMessages.Types (FlashMessage, FlashMessageEvent)
 import qualified Network.AWS as AWS
 import Network.AWS.QAWS.SQS.Types (QueueAttributes, QueueUrl)
-import Qtility.Standard
+import Qtility
 import Types
 
 data Name

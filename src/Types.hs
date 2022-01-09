@@ -3,7 +3,7 @@
 module Types where
 
 import Network.AWS.QAWS.SQS.Types (QueueUrl)
-import Qtility.Standard
+import Qtility
 import RIO.Process
 
 -- | Command line arguments

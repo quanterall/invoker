@@ -26,9 +26,9 @@ dependencies:
 - vty
 - qaws-sqs
 - qaws
-- qtility-standard
+- qtility
 - rio-orphans
-- quanterall-brick
+- qtility-brick
 
 default-extensions:
 - ApplicativeDo
