@@ -2,6 +2,7 @@ module Run (run) where
 
 import Brick.BChan (newBChan, writeBChan)
 import Import
+import qualified Network.AWS as AWS
 import Network.AWS.QAWS (loadAWSEnvironment)
 import qualified Network.AWS.QAWS.SQS as SQS
 import Network.AWS.QAWS.SQS.Types
@@ -16,8 +17,10 @@ run Options {defaultQueueUrl, environmentFile} = do
   templates' <- Templates.loadTemplates `catchIO` \_ -> pure []
   defaultQueueUrlFromFile <- (Just <$> loadQueueUrlFromFile) `catchIO` const (pure Nothing)
   defaultQueueUrlFromEnv <-
-    (Just <$> readEnvironmentVariable (EnvironmentKey "QUEUE_URL"))
-      `catchAny` const (pure Nothing)
+    catching
+      _ReadEnvironmentMissingValue
+      (Just <$> readEnvironmentVariable (EnvironmentKey "QUEUE_URL"))
+      $ const $ pure Nothing
   let defaultUrl = defaultQueueUrl <|> defaultQueueUrlFromEnv <|> defaultQueueUrlFromFile
   currentQueueUrlRef <- newTVarIO defaultUrl
   _queueAttributeThread <- liftIO $
@@ -25,8 +28,8 @@ run Options {defaultQueueUrl, environmentFile} = do
       forever $ do
         currentQueueUrl <- readTVarIO currentQueueUrlRef
         forM_ currentQueueUrl $ \url -> do
-          response <- SQS.getQueueAttributes' env url
-          let maybeAttributes = either (const Nothing) Just response
+          maybeAttributes <-
+            catching AWS._Error (Just <$> SQS.getQueueAttributes' env url) $ const $ pure Nothing
           writeBChan _eventChannel (UI.CurrentQueueAttributes maybeAttributes)
         threadDelay $ 2 * 1000 * 1000
   UI.startUI currentQueueUrlRef _eventChannel env defaultUrl templates'

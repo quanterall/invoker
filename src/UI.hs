@@ -110,7 +110,7 @@ handleSendMessage state form = do
   let url = formState form ^. queueUrl
       message' = formState form ^. message
       awsEnv' = state ^. awsEnv
-  result <- liftIO $ SQS.sendMessage' awsEnv' url message'
+  result <- liftIO $ try $ SQS.sendMessage' awsEnv' url message'
   liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
   case result of
     Right (Just messageId) -> do
@@ -136,7 +136,7 @@ handlePurgeQueue :: UIState -> Form SendMessageData Event Name -> EventM Name (N
 handlePurgeQueue state form = do
   let url = formState form ^. queueUrl
   liftIO $ atomically $ writeTVar (state ^. currentQueueUrlRef) (Just url)
-  result <- liftIO $ SQS.purgeQueue' (state ^. awsEnv) url
+  result <- liftIO $ try $ SQS.purgeQueue' (state ^. awsEnv) url
   newState <-
     result
       & either (awsErrorToText >>> FlashError) (const $ "Queue purged" & FlashSuccess)
@@ -149,7 +149,8 @@ handleLoadTemplateForm ::
   BrickEvent Name Event ->
   EventM Name (Next UIState)
 handleLoadTemplateForm s form (VtyEvent (Vty.EvKey (Vty.KChar 'r') [])) = do
-  reloadedTemplates <- liftIO $ loadTemplates `catchIO` \_ -> pure []
+  reloadedTemplates <-
+    liftIO $ catching_ (_IOException . errorTypeL . _NoSuchThing) loadTemplates (pure [])
   let newState = s {loadTemplateForm = newForm'}
       oldFormState = formState form
       newForm' =
