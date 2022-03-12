@@ -1,7 +1,7 @@
 name:                invoker
 version:             0.1.0.0
 github:              quanterall/invoker
-license:             BSD3
+license:             MIT
 author:              Rickard Andersson
 maintainer:          rickard.andersson@quanterall.com
 copyright:           2021 Rickard Andersson
