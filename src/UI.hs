@@ -148,6 +148,8 @@ handleLoadTemplateForm ::
   Form LoadTemplateData Event Name ->
   BrickEvent Name Event ->
   EventM Name (Next UIState)
+handleLoadTemplateForm s _form (VtyEvent (Vty.EvKey Vty.KEsc [])) = do
+  continue $ s & screen .~ SendMessageScreen
 handleLoadTemplateForm s form (VtyEvent (Vty.EvKey (Vty.KChar 'r') [])) = do
   reloadedTemplates <-
     liftIO $ catching_ (_IOException . errorTypeL . _NoSuchThing) loadTemplates (pure [])
